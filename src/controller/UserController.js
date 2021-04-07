@@ -1,6 +1,8 @@
 const { v4: uuid, validate: isUuid } = require('uuid');
 const bcrypt = require('bcrypt');
-const connection = require('./connection');
+const connection = require('../database/connection');
+const jwt = require("jsonwebtoken");
+const { JWT_SECRET } = require("../config/cfg");
 
 function hashPassword(password){
     const salt = 10;
@@ -45,8 +47,18 @@ exports.userLogin = function userLogin(req, res){
         if(results.length == 1){
             const passwordIsValid = bcrypt.compareSync(userPassword, results[0].password)
             if(passwordIsValid){
+                let token = jwt.sign({
+                    user_id: results[0].id,
+                    userLogin: userLogin
+                },
+                JWT_SECRET,
+                {
+                    expiresIn: "1d"
+                })
+
                 return res.status(200).json({
-                    Sucess: "User and password is valid"
+                    Sucess: "User and password is valid",
+                    token: token
                 })
             }
            res.status(401).json({

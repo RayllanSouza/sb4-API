@@ -1,16 +1,11 @@
 const { json } = require('express');
 const express = require('express');
 const cors = require('cors');
-const connection = require('./connection');
 const app = express();
-const {createNewUser, userLogin} = require("./query")
+const routes = require("./routes/routes");
 
 app.use(json());
-
-
-app.use(cors())
-
-app.post("/createUser", createNewUser);
-app.post("/verifylogin", userLogin);
+app.use(cors());
+app.use(routes);
 
 module.exports = app;

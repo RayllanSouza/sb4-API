@@ -5,7 +5,7 @@ const connection = mysql.createPool({
     user: 'root',
     password: '',
     database: 'sb4games'
-})
+});
 
 
 module.exports = connection;
