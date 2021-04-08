@@ -162,13 +162,40 @@ exports.acceptFriendRequest = async (req, res) => {
         await SyncSQL("UPDATE users SET friend_requests = ? WHERE userLogin = ?", [JSON.stringify(friend_requests), userLogin]);
         await SyncSQL("UPDATE users SET friend_list = ? WHERE userLogin = ?", [JSON.stringify(friend_list), userLogin]);
 
-        return res.status(200).send({
+    } catch(err) {
+        console.log(err);
+
+        return res.status(500).send({
+            error: true,
+            error_msg: "Internal Error"
+        });
+    }
+
+    try {
+        let rows = await SyncSQL("SELECT * FROM users WHERE userLogin = ?", user_accept);
+
+        let friend_requests = JSON.parse(rows[0].friend_requests);
+        let friend_list = JSON.parse(rows[0].friend_list);
+
+        let index = friend_requests.indexOf(userLogin);
+        let index2 = friend_list.indexOf(userLogin);
+
+        if (index > -1) {
+            friend_requests.splice(index, 1);
+        }
+
+        if (index2 == -1) {
+            friend_list.push(userLogin);
+        }
+
+        await SyncSQL("UPDATE users SET friend_requests = ? WHERE userLogin = ?", [JSON.stringify(friend_requests), user_accept]);
+        await SyncSQL("UPDATE users SET friend_list = ? WHERE userLogin = ?", [JSON.stringify(friend_list), user_accept]);
+
+        res.status(200).send({
             userAccept: true
         });
 
     } catch(err) {
-        console.log(err);
-
         return res.status(500).send({
             error: true,
             error_msg: "Internal Error"
