@@ -7,7 +7,8 @@ function JwtMiddleWare(request, response, next) {
     try {
         let token = authorization.split(" ")[1];
         let decoded = jwt.verify(token, JWT_SECRET, {});
-        console.log('decoded', decoded);
+
+        request.headers.decoded = decoded;
         next()
     } catch(err) {
         return response.status(401).send({
