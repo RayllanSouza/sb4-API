@@ -4,6 +4,13 @@ const connection = require('../database/connection');
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../config/cfg");
 
+let SyncSQL = (sql, placeholders) => new Promise((resolve, reject) => {
+    connection.query(sql, placeholders, (err, results, fields) => {
+        if (err) return reject(err);
+        return resolve(results);
+    });
+});
+
 function hashPassword(password){
     const salt = 10;
     return new Promise((resolve, reject)=>{
@@ -15,7 +22,7 @@ function hashPassword(password){
 }
 
 exports.createNewUser = async function createNewUser(req, res){
-    const {name, userLogin, userPassword, email, birthDate} = req.body;
+    const { name, userLogin, userPassword, email, birthDate } = req.body;
     const hashedPassword = await hashPassword(userPassword);
     var insertUser = {
         id: uuid(),
@@ -25,19 +32,36 @@ exports.createNewUser = async function createNewUser(req, res){
         email: email,
         birthDate: birthDate
     }
-    connection.query("SELECT * FROM Users WHERE userLogin = ? ", userLogin, function(error, results, fields){
-        if(error) throw error;
-        if(results.length == 1){
-            return res.status(400).json({
-                Error: "There is already a registered user with this login"
-            })
-        }else{
-            connection.query("INSERT INTO Users SET ?", insertUser, function(error, results, fields){
-                if(error) throw error;
-                return res.status(201).json(insertUser);
-            })
+
+    try {
+        let username_rows = await SyncSQL("SELECT * FROM users WHERE userLogin = ?", userLogin);
+        let email_rows = await SyncSQL("SELECT * FROM users WHERE email = ?", email);
+
+        let already_exist_username = username_rows.length > 0;
+        let already_exist_email = email_rows.length > 0;
+
+        if (already_exist_username) {
+            return res.status(400).send({
+                error: true,
+                error_msg: "This username already in using!"
+            });
         }
-    })
+
+        if (already_exist_email) {
+            return res.status(400).send({
+                error: true,
+                error_msg: "This email already in using!"
+            });
+        }
+
+        await SyncSQL("INSERT INTO Users SET ?", insertUser);
+        return res.status(201).json(insertUser);
+
+    } catch(err) {
+        return res.status(500).send({
+            error: true
+        })
+    }
 }
 
 exports.userLogin = function userLogin(req, res){
@@ -58,7 +82,8 @@ exports.userLogin = function userLogin(req, res){
 
                 return res.status(200).json({
                     Sucess: "User and password is valid",
-                    token: token
+                    token: token,
+                    user_info: results[0]
                 })
             }
            res.status(401).json({
