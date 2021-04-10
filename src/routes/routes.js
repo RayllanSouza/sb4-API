@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { createNewUser, userLogin, sendFriendRequest, getUserFriendsRequest, acceptFriendRequest } = require("../controller/UserController")
+const { createNewUser, userLogin, sendFriendRequest, getUserFriendsRequest, acceptFriendRequest, getUserFriendList, getUserByUserLogin } = require("../controller/UserController")
 const routes = Router();
 const JwtMiddleWare = require("../middleware/jwt");
 
@@ -13,8 +13,13 @@ routes.post("/check_token", JwtMiddleWare, (req, res) => {
     });
 });
 
-routes.post("/send_friend_request", JwtMiddleWare, sendFriendRequest);
+
 routes.post("/get_user_friends_request", JwtMiddleWare, getUserFriendsRequest);
+routes.post("/get_user_friend_list", JwtMiddleWare, getUserFriendList);
+
+routes.post("/send_friend_request", JwtMiddleWare, sendFriendRequest);
 routes.post("/accept_friend_request", JwtMiddleWare, acceptFriendRequest);
+
+routes.post("/get_user_bt_userlogin", JwtMiddleWare, getUserByUserLogin);
 
 module.exports = routes;

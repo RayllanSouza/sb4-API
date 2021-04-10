@@ -203,6 +203,41 @@ exports.acceptFriendRequest = async (req, res) => {
     }
 }
 
+exports.getUserFriendList = async (req, res) => {
+    const { user_id, userLogin, iat, exp } = req.headers.decoded;
+
+    try {
+
+        let rows = await SyncSQL("SELECT * FROM users WHERE userLogin = ?", userLogin);
+
+        if (rows.length > 0) {
+            let friend_list = JSON.parse(rows[0].friend_list);
+            let formatted_friend_list  = [];
+
+            for (let i = 0; i < friend_list.length; i++) {
+                let user = await SyncSQL("SELECT * FROM users WHERE userLogin = ?", friend_list[i]);
+
+                if (user.length == 0) return;
+                formatted_friend_list.push({ username: user[0].userLogin, avatar: user[0].avatarIndex });
+            }
+
+            return res.status(200).send({
+                formatted_friend_list
+            });
+        } else {
+            return res.status(404).send({
+                reason: "User not found"
+            });
+        }
+
+    } catch(err) {
+        return res.status(500).send({
+            error: true,
+            error_msg: "Internal Error"
+        });
+    }
+}
+
 exports.getUserFriendsRequest = async (req, res) => {
     const { user_id, userLogin, iat, exp } = req.headers.decoded;
 
