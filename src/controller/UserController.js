@@ -73,8 +73,8 @@ exports.getUserByUserLogin = async (req, res) => {
         if (username_rows.length > 0) {
             return res.status(200).send({
                 userFounded: true,
-                userAvatar: rows[0].avatarIndex,
-                userLogin: rows[0].userLogin
+                userAvatar: username_rows[0].avatarIndex,
+                userLogin: username_rows[0].userLogin
             })
         } else {
             return res.status(200).send({
