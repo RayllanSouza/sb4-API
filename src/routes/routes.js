@@ -20,6 +20,6 @@ routes.post("/get_user_friend_list", JwtMiddleWare, getUserFriendList);
 routes.post("/send_friend_request", JwtMiddleWare, sendFriendRequest);
 routes.post("/accept_friend_request", JwtMiddleWare, acceptFriendRequest);
 
-routes.post("/get_user_bt_userlogin", JwtMiddleWare, getUserByUserLogin);
+routes.get("/get_user_bt_userlogin", JwtMiddleWare, getUserByUserLogin);
 
 module.exports = routes;
