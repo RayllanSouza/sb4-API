@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { createNewUser, userLogin, sendFriendRequest, getUserFriendsRequest, acceptFriendRequest, getUserFriendList, getUserByUserLogin } = require("../controller/UserController")
+const { createNewUser, userLogin, sendFriendRequest, getUserFriendsRequest, acceptFriendRequest, getUserFriendList, getUserByUserLogin, updateUser } = require("../controller/UserController")
 const routes = Router();
 const JwtMiddleWare = require("../middleware/jwt");
 
@@ -20,6 +20,8 @@ routes.post("/get_user_friend_list", JwtMiddleWare, getUserFriendList);
 routes.post("/send_friend_request", JwtMiddleWare, sendFriendRequest);
 routes.post("/accept_friend_request", JwtMiddleWare, acceptFriendRequest);
 
-routes.get("/get_user_bt_userlogin", JwtMiddleWare, getUserByUserLogin);
+routes.post("/get_user_by_userlogin", JwtMiddleWare, getUserByUserLogin);
+
+routes.put("/updateuser", JwtMiddleWare, updateUser);
 
 module.exports = routes;

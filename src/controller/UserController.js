@@ -66,7 +66,7 @@ exports.createNewUser = async function createNewUser(req, res){
 
 exports.getUserByUserLogin = async (req, res) => {
     const { userLogin } = req.body;
-
+    console.log(userLogin);
     try {
         let username_rows = await SyncSQL("SELECT * FROM users WHERE userLogin = ?", userLogin);
 
@@ -74,16 +74,16 @@ exports.getUserByUserLogin = async (req, res) => {
             return res.status(200).send({
                 userFounded: true,
                 userAvatar: username_rows[0].avatarIndex,
-                userLogin: username_rows[0].userLogin
+                userLogin: username_rows[0].userLogin,
+                userName: username_rows[0].name
             })
         } else {
             return res.status(200).send({
                 userFounded: false
             })
         }
-        
-
     } catch (err) {
+        console.log(err)
         return res.status(500).send({
             error: true,
             error_msg: "Internal Error"
@@ -275,6 +275,22 @@ exports.getUserFriendsRequest = async (req, res) => {
         });
     }
 }
+
+exports.updateUser = async (req, res)=>{
+    const { userName, userLogin, userAvatar} = req.body;
+    try{
+        const userResults = await SyncSQL('UPDATE users SET name = ?, avatarIndex = ? WHERE userLogin = ?', [userName, userAvatar, userLogin])
+        return res.status(201).json(userResults)
+    }catch(err){
+        console.log(err)
+        return res.status(500).send({
+            error: true,
+            error_msg: "Internal Error"
+        })
+    }
+}
+
+
 
 exports.userLogin = function userLogin(req, res){
     const { userLogin, userPassword } = req.body;
