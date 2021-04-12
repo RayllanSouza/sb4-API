@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const connection = require('../database/connection');
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../config/cfg");
+const crypto = require('crypto');
 
 let SyncSQL = (sql, placeholders) => new Promise((resolve, reject) => {
     connection.query(sql, placeholders, (err, results, fields) => {
@@ -276,11 +277,11 @@ exports.getUserFriendsRequest = async (req, res) => {
     }
 }
 
-exports.updateUser = async (req, res)=>{
-    const { userName, userLogin, userAvatar} = req.body;
+exports.updateUserAvatar = async (req, res)=>{
+    const { userLogin, userAvatar } = req.body;
     try{
-        const userResults = await SyncSQL('UPDATE users SET name = ?, avatarIndex = ? WHERE userLogin = ?', [userName, userAvatar, userLogin])
-        return res.status(201).json(userResults)
+        const userResults = await SyncSQL('UPDATE users SET avatarIndex = ? WHERE userLogin = ?', [userAvatar, userLogin])
+        return res.status(204).json(userResults)
     }catch(err){
         console.log(err)
         return res.status(500).send({
@@ -290,7 +291,19 @@ exports.updateUser = async (req, res)=>{
     }
 }
 
-
+exports.updateUserName = async (req, res)=>{
+    const { userName, userLogin} = req.body;
+    try{
+        const userResults = await SyncSQL('UPDATE users SET name = ? WHERE userLogin = ?', [userName, userLogin])
+        return res.status(204).json(userResults)
+    }catch(err){
+        console.log(err)
+        return res.status(500).send({
+            error: true,
+            error_msg: "Internal Error"
+        })
+    }
+}
 
 exports.userLogin = function userLogin(req, res){
     const { userLogin, userPassword } = req.body;
