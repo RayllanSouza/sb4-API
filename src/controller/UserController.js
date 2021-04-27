@@ -108,9 +108,12 @@ exports.sendFriendRequest = async (req, res) => {
         if (username_rows.length > 0) {
 
             let friend_requests_arr = JSON.parse(username_rows[0].friend_requests);
+            let friend_list_arr = JSON.parse(username_rows[0].friend_list);
 
             let already_request = friend_requests_arr.find(element => element == sender_username);
-            if (!already_request) {
+            let already_friend = friend_list_arr.includes(sender_username);
+
+            if (!already_request && !already_friend) {
                 friend_requests_arr.push(sender_username);
             }
 
