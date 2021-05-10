@@ -4,6 +4,7 @@ const connection = require('../database/connection');
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../config/cfg");
 const crypto = require('crypto');
+const fs = require("fs");
 
 let SyncSQL = (sql, placeholders) => new Promise((resolve, reject) => {
     connection.query(sql, placeholders, (err, results, fields) => {
@@ -72,10 +73,23 @@ exports.getUserByUserLogin = async (req, res) => {
         let username_rows = await SyncSQL("SELECT * FROM users WHERE userLogin = ?", userLogin);
 
         if (username_rows.length > 0) {
+
+            let r = await SyncSQL("SELECT * FROM game_counters WHERE username = ?", userLogin);
+            let games_hours = [];
+
+            for (let game_row of r) {
+                let rows = await SyncSQL("SELECT * FROM games WHERE name = ?", game_row.game);
+                games_hours.push({ game_name: game_row.game, game_banner: rows[0].banner_url, counter: game_row.counter });
+            }
+
             return res.status(200).send({
                 userFounded: true,
                 userAvatar: username_rows[0].avatarIndex,
+                userBackground: username_rows[0].backgroundIndex,
+                userDesc: username_rows[0].profile_desc,
+                userLevel: username_rows[0].user_level,
                 userLogin: username_rows[0].userLogin,
+                gamesHours: games_hours,
                 userName: username_rows[0].name
             })
         } else {
@@ -207,6 +221,33 @@ exports.acceptFriendRequest = async (req, res) => {
     }
 }
 
+exports.denyFriendRequest = async (req, res) => {
+    const { user_id, userLogin, iat, exp } = req.headers.decoded;
+    const { username } = req.body;
+
+    try {
+
+        let rows = await SyncSQL("SELECT * FROM users WHERE userLogin = ?", userLogin);
+        
+        let friend_request = JSON.parse(rows[0].friend_requests);
+        let index = friend_request.indexOf(username);
+
+        friend_request.splice(index, 1);
+
+        await SyncSQL(`UPDATE users SET friend_requests = ? WHERE userLogin = ?`, [JSON.stringify(friend_request), userLogin]);
+
+        res.status(200).send({
+            denied: false
+        });
+
+    } catch(err) {
+        return res.status(500).send({
+            error: true,
+            error_msg: "Internal Error"
+        });
+    }
+}
+
 exports.getUserFriendList = async (req, res) => {
     const { user_id, userLogin, iat, exp } = req.headers.decoded;
 
@@ -280,8 +321,9 @@ exports.getUserFriendsRequest = async (req, res) => {
     }
 }
 
-exports.updateUserAvatar = async (req, res)=>{
-    const { userLogin, userAvatar } = req.body;
+exports.updateUserAvatar = async (req, res) => {
+    const { userLogin } = req.headers.decoded;
+    const { userAvatar } = req.body;
     try{
         const userResults = await SyncSQL('UPDATE users SET avatarIndex = ? WHERE userLogin = ?', [userAvatar, userLogin])
         return res.status(204).json(userResults)
@@ -295,11 +337,66 @@ exports.updateUserAvatar = async (req, res)=>{
 }
 
 exports.updateUserName = async (req, res)=>{
-    const { userName, userLogin} = req.body;
+    const { userLogin } = req.headers.decoded;
+    const { userName } = req.body;
+
+    console.log("updateUserName");
+
     try{
         const userResults = await SyncSQL('UPDATE users SET name = ? WHERE userLogin = ?', [userName, userLogin])
         return res.status(204).json(userResults)
     }catch(err){
+        console.log(err)
+        return res.status(500).send({
+            error: true,
+            error_msg: "Internal Error"
+        })
+    }
+}
+
+exports.updateUserDesc = async (req, res) => {
+    const { userLogin } = req.headers.decoded;
+    const { userDesc } = req.body;
+
+    console.log("updateUserDesc");
+
+    try {
+        const userResults = await SyncSQL('UPDATE users SET profile_desc = ? WHERE userLogin = ?', [userDesc, userLogin]);
+        return res.status(204).json(userResults)
+    } catch(err) {
+        console.log(err)
+        return res.status(500).send({
+            error: true,
+            error_msg: "Internal Error"
+        })
+    }
+} 
+
+exports.getAllAvatars = (req, res) => {
+    try {
+        let dir = fs.readdirSync(__dirname.replace("\\controller", "\\public\\avatars"));
+        
+        res.status(200).send({
+            avatars: dir
+        });
+
+    } catch(err) {
+        console.log(err)
+        return res.status(500).send({
+            error: true,
+            error_msg: "Internal Error"
+        })
+    }
+}
+
+exports.getAllBackgrounds = (req, res) => {
+    try {
+        let dir = fs.readdirSync(__dirname.replace("\\controller", "\\public\\backgrounds"));
+        res.status(200).send({
+            backgrounds: dir
+        });
+
+    } catch(err) {
         console.log(err)
         return res.status(500).send({
             error: true,
